@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from threading import Thread
-from datetime import datetime
+from multiprocessing import Process, Manager, Value
 from pythonosc import dispatcher, osc_server
 
 
@@ -11,17 +11,18 @@ class MuseMonitor():
     def __init__(self, server, port):
         self.server = server
         self.port = port
-        self.fft_window_size = 1024
+        self.window_size = 1024
         self.sample_rate = 256
         self._buffer = []
         self._attention_buff = [50, 50, 50, 50, 50]
-        self.raw = 0
-        self.waves = {}
-        self.attention = 0
+        
+        self.raw = Value('d', 0)
+        self.waves = Manager().dict()
+        self.attention = Value('d', 0)
 
-        thread = Thread(target=self._run)
-        thread.daemon = True
-        thread.start()
+        process = Process(target=self._run)
+        process.daemon = True
+        process.start()
 
     def _get_dispatcher(self):
         d = dispatcher.Dispatcher()
@@ -31,7 +32,7 @@ class MuseMonitor():
 
     def _get_fft(self, raw_list):
         fft = np.abs(np.fft.rfft(raw_list))
-        freqs = np.fft.rfftfreq(self.fft_window_size, 1 / self.sample_rate)
+        freqs = np.fft.rfftfreq(self.window_size, 1 / self.sample_rate)
         return [freqs, fft]
 
     def _get_bands(self, raw_list):
@@ -78,13 +79,17 @@ class MuseMonitor():
         return att
 
     def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):
-        self.raw = AF7 - TP9 # TP9 หลังหู-ซ้าย, AF7 หน้าผาก-ซ้าย
-        self._buffer.append(self.raw)
-        if len(self._buffer) > self.fft_window_size:
+        self.raw.acquire()
+        self.raw.value = AF7 - TP9 # TP9 หลังหู-ซ้าย, AF7 หน้าผาก-ซ้าย
+        self.raw.release()
+        self._buffer.append(self.raw.value)
+        if len(self._buffer) > self.window_size:
             self._buffer = self._buffer[1:]
 
-            self.waves = self._get_bands(self._buffer)
-            self.attention = self._attention(self.waves)
+            self.waves.update(self._get_bands(self._buffer))
+            self.attention.acquire()
+            self.attention.value = self._attention(self.waves)
+            self.attention.release()
             self._buffer = self._buffer[self.sample_rate:]
 
     def _run(self):

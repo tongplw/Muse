@@ -1,15 +1,22 @@
 import time
+import pandas as pd
 from muse import MuseMonitor
+from datetime import datetime
 
-
-SERVER = "192.168.1.122"
-PORT = 5000
 
 if __name__ == "__main__":
-    muse = MuseMonitor(SERVER, PORT)
     
+    headset = MuseMonitor("192.168.1.122", 5000)
+    time.sleep(10)
+    starttime = time.time()
+    values = []
+
     while True:
-        print(muse.raw)
-        print(muse.waves)
-        print(muse.attention)
-        time.sleep(1)
+        time.sleep(1/256 - ((time.time() - starttime) % (1/256)))
+        wave = headset.waves
+        values += [[datetime.now()] + [headset.raw.value] + list(wave.values())]
+        # save data every 10 lines
+        if len(values) % 1024 == 0:
+            df = pd.DataFrame(values)
+            df.to_csv('raw.csv', mode='a', index=False, header=False)
+            values = []
