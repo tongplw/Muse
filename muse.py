@@ -31,7 +31,7 @@ class MuseMonitor():
         return d
 
     def _get_fft(self, raw_list):
-        fft = np.abs(np.fft.rfft(raw_list))
+        fft = np.abs(np.fft.rfft(raw_list - np.mean(raw_list))) * 2 / self.window_size
         freqs = np.fft.rfftfreq(self.window_size, 1 / self.sample_rate)
         return [freqs, fft]
 
