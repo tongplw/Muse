@@ -16,7 +16,7 @@ if __name__ == "__main__":
         time.sleep(1)
         wave = headset.waves
         values = [[headset.attention.value, headset.raw.value] + list(wave.values())]
-        print(values, end='\r')
+        print(values)
         # save data every 10 lines
         # if len(values) % 1024 == 0:
         #     df = pd.DataFrame(values)

@@ -1,3 +1,4 @@
+import joblib
 import numpy as np
 import pandas as pd
 
@@ -16,7 +17,8 @@ class MuseMonitor():
         self.window_size = 1024
         self.sample_rate = 256
         self._buffer = []
-        self._attention_buff = [50, 50, 50, 50, 50]
+        self._attention_buff = [.5, .5, .5, .5, .5]
+        self.scaler = joblib.load('scaler')
         
         self.raw = Value('d', 0)
         self.waves = Manager().dict()
@@ -38,8 +40,8 @@ class MuseMonitor():
         return [freqs, fft]
 
     def _get_bands(self, raw_list):
-        bands = {'delta': (1, 4), 'theta': (4, 8), 'low-alpha': (8, 10), 'high-alpha': (10, 13),
-                'low-beta': (13, 18), 'high-beta': (18, 31), 'low-gamma': (30, 41), 'mid-gamma': (41, 50)}
+        bands = {'delta': (1, 3), 'theta': (4, 7), 'low-alpha': (8, 9), 'high-alpha': (10, 12),
+                'low-beta': (13, 17), 'high-beta': (18, 30), 'low-gamma': (30, 40), 'mid-gamma': (41, 50)}
         band_list = {b: [] for b in bands}
         freqs, fft = self._get_fft(raw_list)
         for freq, amps in zip(freqs, fft):
@@ -88,11 +90,11 @@ class MuseMonitor():
             waves[f'log2-{i}'] = np.log2(waves[i])
         waves['log2-theta-alpha'] = np.log2(waves['theta'] + waves['low-alpha'] + waves['high-alpha'])
 
-        att = 0
-        for ind, coe in zip(index, coef):
-            att += waves[ind] * coe
-        # att = att / 1e10
-        self._attention_buff = [max(1e-5, att)] + self._attention_buff[:-1]
+        wave_array = np.array([[val for val in waves.values()]])
+        wave_transformed = self.scaler.transform(wave_array)
+        att = np.sum(wave_transformed * coef) + 0.4
+        if 0 < att <= 1:
+            self._attention_buff = [att] + self._attention_buff[:-1]
         return att
 
     def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):
@@ -102,12 +104,14 @@ class MuseMonitor():
         self._buffer.append(self.raw.value)
         if len(self._buffer) > self.window_size:
             self._buffer = self._buffer[1:]
-
             self.waves.update(self._get_bands(self._buffer))
-            self.attention.acquire()
-            self.attention.value = self._attention(self.waves)
-            self.attention.release()
             self._buffer = self._buffer[self.sample_rate:]
+
+            new_attention = self._attention(self.waves)
+            if 0 < new_attention < 1:
+                self.attention.acquire()
+                self.attention.value = new_attention * 100
+                self.attention.release()
 
     def _run(self):
         server = osc_server.BlockingOSCUDPServer((self.server, self.port), self._get_dispatcher())
