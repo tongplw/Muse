@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 
 from threading import Thread
+from scipy.optimize import fmin
+from scipy.stats import normaltest
 from multiprocessing import Process, Manager, Value
 from pythonosc import dispatcher, osc_server
 
@@ -46,11 +48,25 @@ class MuseMonitor():
                 if low <= freq < high:
                     band_list[b] += [amps]
         for b in band_list:
-            band_list[b] = np.mean(band_list[b])
+            band_list[b] = np.mean(band_list[b]) ** 2
         return band_list
+
+    def _convert_to_mindwave(self, band, value):
+        d_map = {'delta': [6.22949219, 3.34765625, 5.782872, 2.108653],
+                'theta': [5.60664063, 2.18398438, 5.908993, 1.616526],
+                'low-alpha': [5.10400391, 1.18662109, 5.842178, 1.166655],
+                'high-alpha': [5.58320313, 0.61787109, 5.449491, 1.045655],
+                'low-beta': [4.77851563, 0.20209961, 6.226439, 0.109606],
+                'high-beta': [4.32861328, 1.23632813, 7.679877, 0.276243],
+                'low-gamma': [4.13066406, 1.72353516, 6.415543, 0.269904],
+                'mid-gamma': [6.01787109, 2.26328125, 4.476359, 0.306473]}
+        mind_c, muse_c, mind_mean, muse_mean = d_map[band]
+        return ((value ** (1/muse_c)) - muse_mean + mind_mean) ** mind_c
 
     def _attention(self, waves):
         waves = waves.copy()
+        for band in waves:
+            waves[band] = self._convert_to_mindwave(band, waves[band])
         index = ['delta', 'theta', 'low-alpha', 'high-alpha', 'low-beta', 'high-beta',
                 'low-gamma', 'mid-gamma', 'attention-1', 'attention-2', 'attention-3',
                 'attention-4', 'attention-5', 'log2-delta', 'log2-theta',
@@ -75,6 +91,7 @@ class MuseMonitor():
         att = 0
         for ind, coe in zip(index, coef):
             att += waves[ind] * coe
+        # att = att / 1e10
         self._attention_buff = [max(1e-5, att)] + self._attention_buff[:-1]
         return att
 
