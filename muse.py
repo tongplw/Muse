@@ -115,8 +115,7 @@ class MuseMonitor():
 
             new_attention = self._attention(self.waves)
             self.attention.acquire()
-            # self.attention.value = np.round(new_attention, 2) #* 100
-            self.attention.value = new_attention #* 100
+            self.attention.value = np.round(new_attention, 2) * 100
             self.attention.release()
 
     def _run(self):
