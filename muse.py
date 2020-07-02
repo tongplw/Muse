@@ -53,6 +53,9 @@ class MuseMonitor():
             band_list[b] = np.mean(band_list[b]) ** 2
         return band_list
 
+    def _sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta': [6.22949219, 3.34765625, 5.782872, 2.108653],
                 'theta': [5.60664063, 2.18398438, 5.908993, 1.616526],
@@ -92,10 +95,13 @@ class MuseMonitor():
 
         wave_array = np.array([[val for val in waves.values()]])
         wave_transformed = self.scaler.transform(wave_array)
-        att = np.sum(wave_transformed * coef) + 0.4
-        if 0 < att <= 1:
+        att = np.sum(wave_transformed * coef) #+ 0.4
+        if att < 1000:
+            att = self._sigmoid(att - 0.2)
             self._attention_buff = [att] + self._attention_buff[:-1]
-        return att
+            return att
+        else:
+            return self._attention_buff[0]
 
     def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):
         self.raw.acquire()
@@ -108,10 +114,9 @@ class MuseMonitor():
             self._buffer = self._buffer[self.sample_rate:]
 
             new_attention = self._attention(self.waves)
-            if 0 < new_attention < 1:
-                self.attention.acquire()
-                self.attention.value = new_attention * 100
-                self.attention.release()
+            self.attention.acquire()
+            self.attention.value = new_attention #* 100
+            self.attention.release()
 
     def _run(self):
         server = osc_server.BlockingOSCUDPServer((self.server, self.port), self._get_dispatcher())

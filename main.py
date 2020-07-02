@@ -12,13 +12,14 @@ if __name__ == "__main__":
     values = []
 
     while True:
-        # time.sleep(1/256 - ((time.time() - starttime) % (1/256)))
         time.sleep(1)
         wave = headset.waves
-        values = [[headset.attention.value, headset.raw.value] + list(wave.values())]
-        print(values)
+        # values += [[headset.attention.value, headset.raw.value] + list(wave.values())]
+        values += [[headset.attention.value]]
+        print(headset.attention.value)
+
         # save data every 10 lines
-        # if len(values) % 1024 == 0:
-        #     df = pd.DataFrame(values)
-        #     df.to_csv('raw.csv', mode='a', index=False, header=False)
-        #     values = []
+        if len(values) % 10 == 0:
+            df = pd.DataFrame(values)
+            df.to_csv('data.csv', mode='a', index=False, header=False)
+            values = []
