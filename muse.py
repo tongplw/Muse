@@ -95,13 +95,13 @@ class MuseMonitor():
 
         wave_array = np.array([[val for val in waves.values()]])
         wave_transformed = self.scaler.transform(wave_array)
-        att = np.sum(wave_transformed * coef) #+ 0.4
-        if att < 1000:
-            att = self._sigmoid(att - 0.2)
+        att = np.sum(wave_transformed * coef)
+        if att < 50:
+            att = self._sigmoid((att-0.25) * 2.5) + 1e-5
             self._attention_buff = [att] + self._attention_buff[:-1]
             return att
         else:
-            return self._attention_buff[0]
+            return 1e-5 # self._attention_buff[0]
 
     def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):
         self.raw.acquire()
@@ -115,6 +115,7 @@ class MuseMonitor():
 
             new_attention = self._attention(self.waves)
             self.attention.acquire()
+            # self.attention.value = np.round(new_attention, 2) #* 100
             self.attention.value = new_attention #* 100
             self.attention.release()
 
