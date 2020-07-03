@@ -17,8 +17,8 @@ if __name__ == "__main__":
     for i in range(len(df)):
         waves = df.iloc[i].to_dict()
         attention = headset._attention(waves)
-        atts += [attention]
+        if attention < 1:
+            atts += [attention]
 
     plt.hist(atts, bins=200)
     plt.show()
-    
