@@ -11,22 +11,24 @@ from pythonosc import dispatcher, osc_server
 
 class MuseMonitor():
 
-    def __init__(self, server, port):
+    def __init__(self, server=None, port=None, debug=False):
         self.server = server
         self.port = port
         self.window_size = 1024
         self.sample_rate = 256
         self._buffer = []
         self._attention_buff = [.5, .5, .5, .5, .5]
+        self._raw_attention_history = []
         self.scaler = joblib.load('scaler')
         
         self.raw = Value('d', 0)
-        self.waves = Manager().dict()
         self.attention = Value('d', 0)
+        self.waves = Manager().dict()
 
-        process = Process(target=self._run)
-        process.daemon = True
-        process.start()
+        if not debug:
+            process = Process(target=self._run)
+            process.daemon = True
+            process.start()
 
     def _get_dispatcher(self):
         d = dispatcher.Dispatcher()
@@ -55,6 +57,19 @@ class MuseMonitor():
 
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
+
+    def _reject_outliers(self, data, m=3):
+        data = np.array(data)
+        Q3 = np.percentile(data, 75)
+        Q1 = np.percentile(data, 25)
+        IQR = (Q3 - Q1) * m
+        return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
+
+    def _adjust_attention(self, att):
+        if len(self._raw_attention_history) < 10:
+            return att
+        atts = self._reject_outliers(self._raw_attention_history)
+        return (att - np.median(atts)) / np.std(atts)
 
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta': [6.22949219, 3.34765625, 5.782872, 2.108653],
@@ -95,13 +110,12 @@ class MuseMonitor():
 
         wave_array = np.array([[val for val in waves.values()]])
         wave_transformed = self.scaler.transform(wave_array)
-        att = np.sum(wave_transformed * coef)
-        if att < 50:
-            att = self._sigmoid((att-0.25) * 2.5) + 1e-5
-            self._attention_buff = [att] + self._attention_buff[:-1]
-            return att
-        else:
-            return 1e-5 # self._attention_buff[0]
+        raw_att = np.sum(wave_transformed * coef)
+        self._raw_attention_history += [raw_att]
+        adjusted_raw = self._adjust_attention(raw_att)
+        att = self._sigmoid(adjusted_raw) + 1e-5
+        self._attention_buff = [att] + self._attention_buff[:-1]
+        return att
 
     def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):
         self.raw.acquire()
