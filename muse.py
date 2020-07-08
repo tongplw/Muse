@@ -55,9 +55,6 @@ class MuseMonitor():
             band_list[b] = np.mean(band_list[b]) ** 2
         return band_list
 
-    def _sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
-
     def _reject_outliers(self, data, m=3):
         data = np.array(data)
         Q3 = np.percentile(data, 75)
@@ -69,7 +66,10 @@ class MuseMonitor():
         if len(self._attention_history) < 10:
             return att
         atts = self._reject_outliers(self._attention_history)
-        return (att - np.mean(atts)) / np.std(atts)
+        return (att - np.mean(atts)) / np.std(atts) * 0.2 + np.mean(atts)
+
+    def _sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
 
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
@@ -95,7 +95,7 @@ class MuseMonitor():
                 'log2-high-alpha', 'log2-low-beta', 'log2-high-beta', 'log2-low-gamma', 
                 'log2-mid-gamma', 'log2-attention-1', 'log2-attention-2', 'log2-attention-3', 
                 'log2-attention-4', 'log2-attention-5', 'log2-theta-alpha']
-        coef_ = [ 1.85597993e-03, -3.89405744e-02, -2.17976458e-02,
+        coef_ = [1.85597993e-03, -3.89405744e-02, -2.17976458e-02,
                 -4.94719580e-03,  5.92689481e-02, -2.66903157e-02,
                 2.30846084e-02,  6.82606511e-02,  8.54525920e-01,
                 2.10894178e-02, -1.06262949e-01, -2.69200545e-01,
@@ -116,11 +116,9 @@ class MuseMonitor():
         wave_transformed = self.scaler.transform(wave_array)
         att = np.sum(wave_transformed * coef_) + intercept_
 
-        # self._attention_history += [att]
-        # att = self._adjust_attention(att)
-        # att = self._sigmoid(att) + 1e-5
-        if not 0 < att <= 1:
-            att = np.mean(self._attention_buff)
+        self._attention_history += [att]
+        att = self._adjust_attention(att)
+        att = min(1, max(1e-5, att))
         self._attention_buff = [att] + self._attention_buff[:-1]
         return att
 
