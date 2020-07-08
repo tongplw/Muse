@@ -18,7 +18,7 @@ class MuseMonitor():
         self.sample_rate = 256
         self._buffer = []
         self._attention_buff = [.5, .5, .5, .5, .5]
-        self._raw_attention_history = []
+        self._attention_history = []
         self.scaler = joblib.load('scaler')
         
         self.raw = Value('d', 0)
@@ -66,41 +66,45 @@ class MuseMonitor():
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
 
     def _adjust_attention(self, att):
-        if len(self._raw_attention_history) < 10:
+        if len(self._attention_history) < 10:
             return att
-        atts = self._reject_outliers(self._raw_attention_history)
-        return (att - np.median(atts)) / np.std(atts)
+        atts = self._reject_outliers(self._attention_history)
+        return (att - np.mean(atts)) / np.std(atts)
 
     def _convert_to_mindwave(self, band, value):
-        d_map = {'delta': [6.22949219, 3.34765625, 5.782872, 2.108653],
-                'theta': [5.60664063, 2.18398438, 5.908993, 1.616526],
-                'low-alpha': [5.10400391, 1.18662109, 5.842178, 1.166655],
-                'high-alpha': [5.58320313, 0.61787109, 5.449491, 1.045655],
-                'low-beta': [4.77851563, 0.20209961, 6.226439, 0.109606],
-                'high-beta': [4.32861328, 1.23632813, 7.679877, 0.276243],
-                'low-gamma': [4.13066406, 1.72353516, 6.415543, 0.269904],
-                'mid-gamma': [6.01787109, 2.26328125, 4.476359, 0.306473]}
+        d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
+                'theta':        [6.39179688, 6.41220703, 5.832594, 6.030335],
+                'low-alpha':    [5.95166016, 5.65654297, 5.188705, 5.819261],
+                'high-alpha':   [5.67324219, 5.06787109, 5.440118, 6.053460],
+                'low-beta':     [5.53769531, 4.69228516, 5.509398, 5.892162],
+                'high-beta':    [5.55654297, 4.56396484, 5.261583, 5.753560],
+                'low-gamma':    [5.14970703, 4.81093750, 5.088524, 5.302043],
+                'mid-gamma':    [7.08144531, 4.92177734, 4.860328, 5.343249]}
         mind_c, muse_c, mind_mean, muse_mean = d_map[band]
-        return ((value ** (1/muse_c)) - muse_mean + mind_mean) ** mind_c
+        value = value / 1.8 * 4096 * 2
+        return ((value ** (1 / muse_c)) - muse_mean + mind_mean) ** mind_c
 
     def _attention(self, waves):
         waves = waves.copy()
         for band in waves:
             waves[band] = self._convert_to_mindwave(band, waves[band])
-        index = ['delta', 'theta', 'low-alpha', 'high-alpha', 'low-beta', 'high-beta',
-                'low-gamma', 'mid-gamma', 'attention-1', 'attention-2', 'attention-3',
-                'attention-4', 'attention-5', 'log2-delta', 'log2-theta',
-                'log2-low-alpha', 'log2-high-alpha', 'log2-low-beta', 'log2-high-beta',
-                'log2-low-gamma', 'log2-mid-gamma', 'log2-attention-1',
-                'log2-attention-2', 'log2-attention-3', 'log2-attention-4',
-                'log2-attention-5', 'log2-theta-alpha']
-        coef = [3.53705769e-03, -4.23337846e-02, -2.69203699e-02, -1.34591328e-02,
-                7.62320160e-02, -1.88313044e-02, -7.54789000e-03,  6.47782749e-02,
-                8.54250997e-01,  1.73868814e-02, -1.09176174e-01, -2.62815125e-01,
-                2.48854082e-01,  1.00844863e-02,  7.98661639e-03,  1.04763222e-02,
-                8.79394322e-03, -7.04150397e-03,  7.52820760e-01,  4.04370665e-04,
-                2.35751280e-03, -1.27259062e-03, -4.07376421e-03,  2.82478619e-02,
-                -3.90226910e-03, -4.99784235e-03, -7.18270207e-01]
+        index = ['delta', 'theta', 'low-alpha', 'high-alpha', 
+                'low-beta', 'high-beta', 'low-gamma', 'mid-gamma', 
+                'attention-1', 'attention-2', 'attention-3', 'attention-4', 
+                'attention-5', 'log2-delta', 'log2-theta', 'log2-low-alpha', 
+                'log2-high-alpha', 'log2-low-beta', 'log2-high-beta', 'log2-low-gamma', 
+                'log2-mid-gamma', 'log2-attention-1', 'log2-attention-2', 'log2-attention-3', 
+                'log2-attention-4', 'log2-attention-5', 'log2-theta-alpha']
+        coef_ = [ 1.85597993e-03, -3.89405744e-02, -2.17976458e-02,
+                -4.94719580e-03,  5.92689481e-02, -2.66903157e-02,
+                2.30846084e-02,  6.82606511e-02,  8.54525920e-01,
+                2.10894178e-02, -1.06262949e-01, -2.69200545e-01,
+                2.50926910e-01,  6.62901487e-03,  5.85212860e-03,
+                6.45113734e-03,  1.61475866e-04, -1.34012739e-03,
+                7.47788932e-01, -8.24321394e-04, -1.39632993e-03,
+                -9.23905598e-03, -9.27560591e-03,  2.64911164e-02,
+                2.01285851e-03, -2.64492016e-03, -7.13587632e-01]
+        intercept_ = 0.18241877
 
         for i in range(5):
             waves[f'attention-{i+1}'] = self._attention_buff[i]
@@ -110,10 +114,13 @@ class MuseMonitor():
 
         wave_array = np.array([[val for val in waves.values()]])
         wave_transformed = self.scaler.transform(wave_array)
-        raw_att = np.sum(wave_transformed * coef)
-        self._raw_attention_history += [raw_att]
-        adjusted_raw = self._adjust_attention(raw_att)
-        att = self._sigmoid(adjusted_raw) + 1e-5
+        att = np.sum(wave_transformed * coef_) + intercept_
+
+        # self._attention_history += [att]
+        # att = self._adjust_attention(att)
+        # att = self._sigmoid(att) + 1e-5
+        if not 0 < att <= 1:
+            att = np.mean(self._attention_buff)
         self._attention_buff = [att] + self._attention_buff[:-1]
         return att
 
