@@ -6,8 +6,8 @@ from datetime import datetime
 
 if __name__ == "__main__":
     
-    # headset = MuseMonitor("192.168.1.122", 5000)
-    headset = MuseMonitor("192.168.43.126", 5000)
+    headset = MuseMonitor("192.168.1.122", 5000)
+    # headset = MuseMonitor("192.168.43.126", 5000)
     time.sleep(10)
     starttime = time.time()
     values = []
