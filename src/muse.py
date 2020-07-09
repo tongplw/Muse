@@ -68,9 +68,6 @@ class MuseMonitor():
         atts = self._reject_outliers(self._attention_history)
         return (att - np.mean(atts)) / np.std(atts) * 0.2 + 0.5
 
-    def _sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
-
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
                 'theta':        [6.39179688, 6.41220703, 5.832594, 6.030335],
