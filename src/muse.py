@@ -66,7 +66,8 @@ class MuseMonitor():
         if len(self._attention_history) < 10:
             return att
         atts = self._reject_outliers(self._attention_history)
-        return (att - np.mean(atts)) / np.std(atts) * 0.2 + 0.5
+        # return att
+        return (att - 0.5) / np.std(atts) * 0.3 + 0.5
 
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
