@@ -66,7 +66,7 @@ class MuseMonitor():
         if len(self._attention_history) < 10:
             return att
         atts = self._reject_outliers(self._attention_history)
-        return (att - np.mean(atts)) / np.std(atts) * 0.2 + np.mean(atts)
+        return (att - np.mean(atts)) / np.std(atts) * 0.2 + 0.5
 
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
