@@ -15,16 +15,5 @@ if __name__ == "__main__":
 
     while True:
         time.sleep(1)
-        # wave = headset.waves
-        # values += [[headset.attention.value] + list(wave.values())]
-        # values += [[headset.attention.value]]
-        # print(headset.attention.value)
-
-        # # save data every 10 lines
-        # if len(values) % 10 == 0:
-        #     df = pd.DataFrame(values)
-        #     df.to_csv('data.csv', mode='a', index=False, header=False)
-        #     values = []
-
         attention = headset.attention.value
         plot_attention(attention)
