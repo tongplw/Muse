@@ -19,4 +19,4 @@ if __name__ == "__main__":
 
         attention = int(np.round(float(attention), 2) * 100)
         plot_attention(attention)
-        time.sleep(0.5)
+        time.sleep(0.1)
