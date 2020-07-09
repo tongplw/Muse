@@ -1,6 +1,6 @@
 import time
 import pandas as pd
-from muse import MuseMonitor
+from src.muse import MuseMonitor
 from datetime import datetime
 
 

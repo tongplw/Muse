@@ -19,7 +19,7 @@ class MuseMonitor():
         self._buffer = []
         self._attention_buff = [.5, .5, .5, .5, .5]
         self._attention_history = []
-        self.scaler = joblib.load('scaler')
+        self.scaler = joblib.load('res/scaler')
         
         self.raw = Value('d', 0)
         self.attention = Value('d', 0)
