@@ -62,12 +62,16 @@ class MuseMonitor():
         IQR = (Q3 - Q1) * m
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
 
-    def _adjust_attention(self, att):
-        if len(self._attention_history) < 10:
-            return att
+    def _calibrate(self, att):
+        if len(self._attention_history) < 5:
+            self._attention_history += [att]
+            return min(1, max(1e-5, att))
+        self._attention_history += [att]
         atts = self._reject_outliers(self._attention_history)
-        # return att
-        return (att - 0.5) / np.std(atts) * 0.25 + 0.5
+        print(np.mean(atts))
+        att = (att - np.mean(atts)) / np.std(atts) * 0.25 + 0.5
+        return min(1, max(1e-5, att))
+        return att
 
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
@@ -114,10 +118,9 @@ class MuseMonitor():
         wave_transformed = self.scaler.transform(wave_array)
         att = np.sum(wave_transformed * coef_) + intercept_
 
-        self._attention_history += [att]
-        att = self._adjust_attention(att)
-        att = min(1, max(1e-5, att))
-        self._attention_buff = [att] + self._attention_buff[:-1]
+        att = self._calibrate(att)
+        if 0 < att < 1:
+            self._attention_buff = [att] + self._attention_buff[:-1]
         return att
 
     def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):

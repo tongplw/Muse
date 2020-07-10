@@ -25,4 +25,7 @@ def live_plotter(x_vec, y1_data, line1, title='', pause_time=1e-2):
 def plot_attention(att):
     global x_vec, y_vec, line1
     y_vec = np.append(y_vec[1:], att)
-    line1 = live_plotter(x_vec, y_vec, line1)
+    try:
+        line1 = live_plotter(x_vec, y_vec, line1)
+    except:
+        pass

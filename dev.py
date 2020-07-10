@@ -13,10 +13,12 @@ if __name__ == "__main__":
     df = pd.read_csv('res/data.csv', header=None).iloc[:, 1:]
     df.columns = ['delta', 'theta', 'low-alpha', 'high-alpha', 'low-beta', 'high-beta', 'low-gamma', 'mid-gamma']
 
+    atts = []
+
     for i in tqdm(range(len(df))):
         waves = df.iloc[i].to_dict()
         attention = headset._attention(waves)
+        atts += [attention]
 
-        attention = int(np.round(float(attention), 2) * 100)
-        plot_attention(attention)
-        time.sleep(0.1)
+    plt.hist(atts, bins=200)
+    plt.show() 
