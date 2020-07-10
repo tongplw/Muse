@@ -68,7 +68,6 @@ class MuseMonitor():
             return min(1, max(1e-5, att))
         self._attention_history += [att]
         atts = self._reject_outliers(self._attention_history)
-        print(np.mean(atts))
         att = (att - np.mean(atts)) / np.std(atts) * 0.25 + 0.5
         return min(1, max(1e-5, att))
         return att
