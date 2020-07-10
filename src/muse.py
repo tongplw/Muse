@@ -63,14 +63,13 @@ class MuseMonitor():
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
 
     def _calibrate(self, att):
-        if len(self._attention_history) < 5:
-            self._attention_history += [att]
-            return min(1, max(1e-5, att))
         self._attention_history += [att]
-        atts = self._reject_outliers(self._attention_history)
-        att = (att - np.mean(atts)) / np.std(atts) * 0.25 + 0.5
-        return min(1, max(1e-5, att))
-        return att
+        if len(self._attention_history) < 5:
+            return min(1, max(1e-5, att))
+        else:
+            atts = self._reject_outliers(self._attention_history)
+            att = (att - np.mean(atts)) / np.std(atts) * 0.25 + 0.5
+            return min(1, max(1e-5, att))
 
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
