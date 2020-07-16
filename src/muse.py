@@ -65,11 +65,9 @@ class MuseMonitor():
 
     def _calibrate(self, att):
         self._running_stats.update(att)
-        if self._running_stats.get_count() < 5:
-            return min(1, max(1e-5, att))
-        else:
+        if self._running_stats.get_count() > 5:
             att = (att - self._running_stats.get_mean()) / self._running_stats.get_std() * 0.25 + 0.5
-            return min(1, max(1e-5, att))
+        return min(1, max(1e-5, att))
 
     def _convert_to_mindwave(self, band, value):
         d_map = {'delta':       [7.32900391, 7.47392578, 5.576955, 5.687801],
