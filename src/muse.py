@@ -5,8 +5,9 @@ import pandas as pd
 from threading import Thread
 from scipy.optimize import fmin
 from scipy.stats import normaltest
-from multiprocessing import Process, Manager, Value
 from pythonosc import dispatcher, osc_server
+from multiprocessing import Process, Manager, Value
+from src.RunningStats import RunningStats
 
 
 class MuseMonitor():
@@ -18,7 +19,7 @@ class MuseMonitor():
         self.sample_rate = 256
         self._buffer = []
         self._attention_buff = [.5, .5, .5, .5, .5]
-        self._attention_history = []
+        self._running_stats = RunningStats()
         self.scaler = joblib.load('res/scaler')
         
         self.raw = Value('d', 0)
@@ -63,12 +64,11 @@ class MuseMonitor():
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
 
     def _calibrate(self, att):
-        self._attention_history += [att]
-        if len(self._attention_history) < 5:
+        self._running_stats.update(att)
+        if self._running_stats.get_count() < 5:
             return min(1, max(1e-5, att))
         else:
-            atts = self._reject_outliers(self._attention_history)
-            att = (att - np.mean(atts)) / np.std(atts) * 0.25 + 0.5
+            att = (att - self._running_stats.get_mean()) / self._running_stats.get_std() * 0.25 + 0.5
             return min(1, max(1e-5, att))
 
     def _convert_to_mindwave(self, band, value):
