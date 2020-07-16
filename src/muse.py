@@ -64,7 +64,7 @@ class MuseMonitor():
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
 
     def _calibrate(self, att):
-        # recalibration at p-value 0.01 (two-tailed)
+        # recalibrate at p-value 0.01 (two-tailed)
         if self._running_stats.get_count() > 30:
             z = (att - self._running_stats.get_mean()) / self._running_stats.get_std()
             if abs(z) >= 2.58:
