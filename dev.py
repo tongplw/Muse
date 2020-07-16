@@ -20,6 +20,6 @@ if __name__ == "__main__":
         attention = headset._attention(waves)
         atts += [attention]
 
-    # plt.hist(atts, bins=200)
-    plt.plot(atts)
+    plt.hist(atts, bins=200)
+    # plt.plot(atts)
     plt.show() 
