@@ -26,6 +26,11 @@ class RunningStats():
         if self._count == 0:
             raise StatsError('require number of population at least 1')
         return math.sqrt(self._dsquared / self._count)
+    
+    def clear(self):
+        self._count = 0
+        self._mean = 0
+        self._dsquared = 0
 
 
 class StatsError(Exception):
