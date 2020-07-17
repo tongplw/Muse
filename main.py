@@ -3,7 +3,7 @@ import pandas as pd
 
 from datetime import datetime
 from src.muse import MuseMonitor
-from src.pylive import plot_attention
+from src.pylive import live_plot
 
 
 if __name__ == "__main__":
@@ -16,4 +16,5 @@ if __name__ == "__main__":
     while True:
         time.sleep(1)
         attention = headset.attention.value
-        plot_attention(attention)
+        meditation = headset.meditation.value
+        live_plot(attention)

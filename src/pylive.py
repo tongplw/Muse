@@ -5,8 +5,8 @@ plt.style.use('ggplot')
 
 size = 100
 x_vec = np.linspace(0, 1, size + 1)[:-1]
-y_vec = np.zeros(size)
-line1 = []
+y_vecs = []
+lines = []
 
 def live_plotter(x_vec, y1_data, line1, title='', pause_time=1e-2):
     if line1 == []:
@@ -22,10 +22,14 @@ def live_plotter(x_vec, y1_data, line1, title='', pause_time=1e-2):
     plt.pause(pause_time)
     return line1
 
-def plot_attention(att):
-    global x_vec, y_vec, line1
-    y_vec = np.append(y_vec[1:], att)
-    try:
-        line1 = live_plotter(x_vec, y_vec, line1)
-    except:
-        pass
+def live_plot(*args):
+    global x_vec, y_vecs, lines, size
+    while len(y_vecs) < len(args):
+        y_vecs += [np.zeros(size)]
+        lines += [[]]
+    for i, v in enumerate(args):
+        y_vecs[i] = np.append(y_vecs[i][1:], v)
+        try:
+            lines[i] = live_plotter(x_vec, y_vecs[i], lines[i])
+        except:
+            pass

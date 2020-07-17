@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from src.muse import MuseMonitor
-from src.pylive import plot_attention
+from src.pylive import live_plot
 
 if __name__ == "__main__":
     
@@ -18,13 +18,13 @@ if __name__ == "__main__":
 
     for i in tqdm(range(len(df))):
         waves = df.iloc[i].to_dict()
-        attention = headset._attention(waves)
+        attention = headset._attention(waves) * 100
         atts += [attention]
-        meditation = headset._meditation(waves)
+        meditation = headset._meditation(waves) * 100
         meds += [meditation]
 
     # plt.hist(atts, bins=200)
     # plt.hist(meds, bins=200, alpha=0.5)
     plt.plot(atts)
-    plt.plot(meds, alpha=0.5)
+    plt.plot(meds)
     plt.show() 

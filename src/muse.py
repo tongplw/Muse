@@ -73,7 +73,7 @@ class MuseMonitor():
                 
         self._running_stats[key].update(val)
         if self._running_stats[key].get_count() > 5:
-            val = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std() * 0.25 + 0.5
+            val = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std() * 0.23 + 0.5
         return min(1, max(1e-5, val))
 
     def _convert_to_mindwave(self, band, value):
