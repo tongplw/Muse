@@ -14,7 +14,7 @@ if __name__ == "__main__":
     values = []
 
     while True:
-        time.sleep(1)
+        time.sleep(0.8)
         attention = headset.attention.value
         meditation = headset.meditation.value
         live_plot(attention, meditation)

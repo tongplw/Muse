@@ -66,16 +66,13 @@ class MuseMonitor():
 
     def _calibrate(self, key, val):
         print(key, val)
-        # recalibrate at p-value 0.01 (two-tailed)
-        if self._running_stats[key].get_count() > 10:
-            z = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std()
-            if abs(z) >= 2.58 or self._running_stats[key].get_std() > 0.5:
-                print('clear', key)
-                self._running_stats[key].clear()
-                
         self._running_stats[key].update(val)
         if self._running_stats[key].get_count() > 5:
-            val = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std() * 0.23 + 0.5
+            if self._running_stats[key].get_std() > 0.5:
+                print('clear', key)
+                self._running_stats[key].clear()
+            else:
+                val = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std() * 0.23 + 0.5
         return min(1, max(1e-5, val))
 
     def _convert_to_mindwave(self, band, value):
