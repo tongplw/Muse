@@ -63,16 +63,17 @@ class MuseMonitor():
         Q1 = np.percentile(data, 25)
         IQR = (Q3 - Q1) * m
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
+    
+    def _is_wearing(self, key, val):
+        return val < 10 and self._running_stats[key].get_std() < 0.5
 
     def _calibrate(self, key, val):
-        print(key, val)
         self._running_stats[key].update(val)
+        if not self._is_wearing(key, val):
+            self._running_stats[key].clear()
+            val = 0
         if self._running_stats[key].get_count() > 5:
-            if self._running_stats[key].get_std() > 0.5:
-                print('clear', key)
-                self._running_stats[key].clear()
-            else:
-                val = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std() * 0.23 + 0.5
+            val = (val - self._running_stats[key].get_mean()) / self._running_stats[key].get_std() * 0.23 + 0.5
         return min(1, max(1e-5, val))
 
     def _convert_to_mindwave(self, band, value):

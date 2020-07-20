@@ -19,12 +19,14 @@ class RunningStats():
         
     def get_mean(self):
         if self._count == 0:
-            raise StatsError('require number of samples at least 1')
+            return 0
+            # raise StatsError('require number of samples at least 1')
         return self._mean
 
     def get_std(self):
         if self._count == 0:
-            raise StatsError('require number of samples at least 1')
+            return 0
+            # raise StatsError('require number of samples at least 1')
         return math.sqrt(self._dsquared / self._count)
     
     def clear(self):
