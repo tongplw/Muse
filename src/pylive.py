@@ -11,7 +11,7 @@ lines = []
 def live_plotter(x_vec, y1_data, line1, title='', pause_time=1e-2):
     if line1 == []:
         plt.ion()
-        fig = plt.figure(figsize=(13, 6))
+        fig = plt.figure(figsize=(15, 3))
         ax = fig.add_subplot(111)
         line1, = ax.plot(x_vec, y1_data,'-o',alpha=0.8)        
         plt.ylabel('Y Label')
