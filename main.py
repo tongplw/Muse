@@ -17,4 +17,4 @@ if __name__ == "__main__":
         time.sleep(1)
         attention = headset.attention.value
         meditation = headset.meditation.value
-        live_plot(attention)
+        live_plot(attention, meditation)
