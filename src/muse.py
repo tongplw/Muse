@@ -65,7 +65,7 @@ class MuseMonitor():
         return data[(data > Q1 - IQR) & (data < Q3 + IQR)]
     
     def _is_wearing(self, key, val):
-        return val < 10 and self._running_stats[key].get_std() < 0.5
+        return val < 5 and self._running_stats[key].get_std() < 0.5
 
     def _calibrate(self, key, val):
         self._running_stats[key].update(val)
@@ -119,7 +119,7 @@ class MuseMonitor():
             self._meditation_buff = [med] + self._meditation_buff[:-1]
         return med
 
-    def _eeg_handler(self, unused_addr, args, TP9, AF7, AF8, TP10, AUX):
+    def _eeg_handler(self, unused_addr=None, args=None, TP9=None, AF7=None, AF8=None, TP10=None, AUX=None):
         self.raw.acquire()
         self.raw.value = AF7 - TP9 # TP9 หลังหู-ซ้าย, AF7 หน้าผาก-ซ้าย
         self.raw.release()
