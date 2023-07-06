@@ -1,7 +1,7 @@
 joblib==0.15.1
 numpy==1.22.0
 pandas==1.0.4
-scipy==1.4.1
+scipy==1.10.0
 tqdm==4.46.1
 matplotlib==3.2.1
 python-osc==1.7.4
